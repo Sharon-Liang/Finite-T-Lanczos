@@ -6,3 +6,7 @@ using BenchmarkTools
 using DelimitedFiles
 using PyPlot
 using Random
+
+Random.seed!()
+
+println("Finish loading packages!")

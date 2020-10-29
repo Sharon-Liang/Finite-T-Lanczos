@@ -1,5 +1,3 @@
-include("package.jl")
-
 function icgs(u::AbstractArray, Q::AbstractArray)
     """Iterative Classical Gram-Schmidt Algorithm.
        Input: u := the vector to be orthogonalized
@@ -102,40 +100,3 @@ function BLM(A::AbstractMatrix, nev = 50, return_basis = true)
     end   
     return T, Q        
 end
-
-function BLM_old(A::AbstractMatrix, nev = 50, return_basis = true)
-    """Block Lanczos Method
-       Input: A:= Symmetric Matrix
-              nev:= number of Lanczos steps
-       Output: T := block tridiagonal matrix
-               Q := Orthonormal basis of Krylov space
-    """
-    dim = size(A)[1]; 
-    ncv = min(nev, dim); 
-    s = 10
-    while mod(ncv,s) !=0
-        s -= 1
-    end
-    p = Int(ncv / s);
-    T, Q = zeros(ncv, ncv), zeros(dim, ncv);
-    M1, X0 = itFOLM(A, p);
-    X = X0;
-    for j = 1:s
-        pos = (j-1)*p
-        Q[:, pos+1 : pos+p] = X
-        R = A * X
-        T[pos+1 : pos+p, pos+1 : pos+p] = X' * R;
-        
-        R = icgs(R, Q)
-        F = qr(R)
-        X = Matrix(F.Q)
-        B = Matrix(F.R)
-        if j < s
-            T[pos+1 : pos+p, j*p+1 : j*p + p] = B'
-            T[j*p+1 : j*p + p, pos+1 : pos+p] = B
-        end
-    end   
-    return T, Q        
-end
-
-
