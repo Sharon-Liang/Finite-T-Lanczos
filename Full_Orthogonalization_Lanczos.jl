@@ -26,19 +26,31 @@ function random_init(N::Int)
     return vr
 end
 
-function itFOLM(A::AbstractMatrix; nev = 50, return_basis = true)
+function itFOLM(A::AbstractMatrix; nev = 50, lb = nothing, return_basis = true)
     """Iterative Full Orthogonalized Lanczos Method
        Input: A:= Symmetric Matrix
-              nev:= number of Lanczos steps
+            nev:= number of Lanczos steps
+            basis := exact low lying eigen-states
        Output: T := tridiagonal matrix
                Q := Orthonormal basis of Krylov space
     """
-    dim = size(A)[1];
-    ncv = min(nev, dim); v0 = random_init(dim); # random initiation vector
-    T, Q = zeros(ncv, ncv), zeros(dim, ncv);
+    dim = size(A)[1]; nev = min(nev, dim);
+    ncv = min(nev, dim);
+    v0 = random_init(dim) # random initiation vector
+    if lb == nothing
+        Nv = 0
+        T, Q = zeros(ncv, ncv), zeros(dim, ncv + Nv);
+    else
+        Nv = size(lb)[2];
+        v0 = icgs(v0, lb);
+        T, Q = zeros(ncv, ncv), zeros(dim, ncv + Nv);
+        Q[:,1 : Nv] = lb
+    end
+    
+    
     w = v0; r = zeros(dim); k = 0;
     for k =1: ncv
-        Q[:, k] = w; 
+        Q[:, Nv + k] = w; 
         r = A * w;
         T[k,k] = w' * r;
         r = icgs(r, Q)
@@ -51,7 +63,7 @@ function itFOLM(A::AbstractMatrix; nev = 50, return_basis = true)
     
     #T = Q' * A * Q;
     if return_basis
-        return T, Q
+        return T, Q[:, Nv+1 : ncv + Nv]
     else
         return T
     end
